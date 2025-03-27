@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reloj Dual: Real vs Táctica</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            gap: 20px;
+        }
+        .contenedor-relojes {
+            display: flex;
+            gap: 30px;
+        }
+        .reloj {
+            background-color: #222;
+            color: #0f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.8em;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            font-family: 'Courier New', monospace;
+            width: 300px;
+        }
+        .titulo {
+            font-size: 0.8em;
+            margin-bottom: 10px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .fecha {
+            font-size: 0.6em;
+            margin-top: 10px;
+            color: #ccc;
+        }
+        .configuracion {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #eee;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor-relojes">
+        <!-- Reloj 1: Hora Real -->
+        <div class="reloj">
+            <div class="titulo">HORA REAL</div>
+            <div id="hora-real">--:--:--</div>
+            <div id="fecha-real" class="fecha">--- --, ----</div>
+        </div>
+
+        <!-- Reloj 2: Hora Táctica -->
+        <div class="reloj">
+            <div class="titulo">HORA TÁCTICA</div>
+            <div id="hora-tactica">--:--:--</div>
+            <div id="fecha-tactica" class="fecha">--- --, ----</div>
+        </div>
+    </div>
+
+    <!-- Configuración de la Hora Táctica -->
+    <div class="configuracion">
+        <h3>Configurar Hora Táctica</h3>
+        <p><small>Edita los valores y haz clic en "Actualizar"</small></p>
+        
+        <script>
+            // Valores iniciales (puedes modificarlos directamente aquí)
+            let configTactica = {
+                year: 2034,
+                month: 1,
+                day: 25,
+                hour: 14,
+                minute: 30,
+                second: 0
+            };
+        </script>
+
+        <button onclick="actualizarHoraTactica()">Actualizar Hora Táctica</button>
+    </div>
+
+    <script>
+        // =============================================
+        // RELOJ REAL (automático, no requiere configuración)
+        // =============================================
+        function actualizarRelojReal() {
+            const ahora = new Date();
+            
+            // Formatear hora
+            const horas = String(ahora.getHours()).padStart(2, '0');
+            const minutos = String(ahora.getMinutes()).padStart(2, '0');
+            const segundos = String(ahora.getSeconds()).padStart(2, '0');
+            
+            // Formatear fecha
+            const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            
+            document.getElementById('hora-real').textContent = `${horas}:${minutos}:${segundos}`;
+            document.getElementById('fecha-real').textContent = 
+                `${diasSemana[ahora.getDay()]} ${ahora.getDate()} de ${meses[ahora.getMonth()]}, ${ahora.getFullYear()}`;
+        }
+
+        // Actualizar cada segundo
+        setInterval(actualizarRelojReal, 1000);
+        actualizarRelojReal(); // Iniciar inmediatamente
+
+        // =============================================
+        // RELOJ TÁCTICO (configurable manualmente)
+        // =============================================
+        let fechaTactica = new Date(
+            configTactica.year,
+            configTactica.month - 1, // Ajuste para meses (0-11)
+            configTactica.day,
+            configTactica.hour,
+            configTactica.minute,
+            configTactica.second
+        );
+
+        function actualizarRelojTactico() {
+            // Avanzar el tiempo 1 segundo
+            fechaTactica.setSeconds(fechaTactica.getSeconds() + 1);
+            
+            // Formatear hora
+            const horas = String(fechaTactica.getHours()).padStart(2, '0');
+            const minutos = String(fechaTactica.getMinutes()).padStart(2, '0');
+            const segundos = String(fechaTactica.getSeconds()).padStart(2, '0');
+            
+            // Formatear fecha
+            const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            
+            document.getElementById('hora-tactica').textContent = `${horas}:${minutos}:${segundos}`;
+            document.getElementById('fecha-tactica').textContent = 
+                `${diasSemana[fechaTactica.getDay()]} ${fechaTactica.getDate()} de ${meses[fechaTactica.getMonth()]}, ${fechaTactica.getFullYear()}`;
+        }
+
+        // Función para actualizar la hora táctica manualmente
+        function actualizarHoraTactica() {
+            // Vuelve a crear la fecha con los valores actualizados de `configTactica`
+            fechaTactica = new Date(
+                configTactica.year,
+                configTactica.month - 1,
+                configTactica.day,
+                configTactica.hour,
+                configTactica.minute,
+                configTactica.second
+            );
+            actualizarRelojTactico(); // Forzar actualización inmediata
+        }
+
+        // Iniciar reloj táctico
+        setInterval(actualizarRelojTactico, 1000);
+        actualizarRelojTactico();
+    </script>
+</body>
+</html>
