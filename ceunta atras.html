@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuenta atrás exposiciones</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 400px;
+            max-width: 90%;
+        }
+        h1 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            color: #e74c3c;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        #startBtn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        #pauseBtn {
+            background-color: #f39c12;
+            color: white;
+        }
+        #resetBtn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        #stopAlarmBtn {
+            background-color: #9b59b6;
+            color: white;
+            display: none; /* Oculto inicialmente */
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        .input-group {
+            margin: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-weight: bold;
+            text-align: left;
+        }
+        input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        .set-time {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .set-time input {
+            width: 60px;
+            text-align: center;
+        }
+        .alarm-active {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { background-color: #ffebee; }
+            50% { background-color: #ffcdd2; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <h1>Cuenta atrás exposiciones</h1>
+        
+        <div class="input-group">
+            <label>Establecer tiempo:</label>
+            <div class="set-time">
+                <input type="number" id="hours" min="0" max="99" placeholder="Horas" value="0">
+                <span>:</span>
+                <input type="number" id="minutes" min="0" max="59" placeholder="Min" value="10">
+                <span>:</span>
+                <input type="number" id="seconds" min="0" max="59" placeholder="Seg" value="0">
+            </div>
+        </div>
+
+        <div class="timer-display" id="display">00:10:00</div>
+        
+        <div class="controls">
+            <button id="startBtn">Iniciar</button>
+            <button id="pauseBtn">Pausar</button>
+            <button id="resetBtn">Reiniciar</button>
+            <button id="stopAlarmBtn">Detener Alarma</button>
+        </div>
+    </div>
+
+    <script>
+        // Elementos del DOM
+        const display = document.getElementById('display');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const stopAlarmBtn = document.getElementById('stopAlarmBtn');
+        const hoursInput = document.getElementById('hours');
+        const minutesInput = document.getElementById('minutes');
+        const secondsInput = document.getElementById('seconds');
+        const container = document.getElementById('container');
+
+        // Variables del timer
+        let totalSeconds = 600; // 10 minutos por defecto
+        let timerInterval = null;
+        let isPaused = false;
+        let alarmAudio = null;
+
+        // Función para crear el audio (sonido de alarma)
+        function createAlarmSound() {
+            // Crear un contexto de audio
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const audioContext = new AudioContext();
+            
+            // Crear un oscilador (genera el tono)
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine'; // Tipo de onda (sonido)
+            oscillator.frequency.value = 880; // Frecuencia (Hz)
+            gainNode.gain.value = 0.1; // Volumen
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            
+            // Parpadear después de 0.5 segundos
+            setTimeout(() => {
+                oscillator.stop();
+            }, 500);
+            
+            return oscillator;
+        }
+
+        // Función para activar la alarma
+        function triggerAlarm() {
+            // Efecto visual
+            container.classList.add('alarm-active');
+            stopAlarmBtn.style.display = 'inline-block';
+            
+            // Sonido de alarma (se repite cada segundo)
+            alarmAudio = setInterval(() => {
+                createAlarmSound();
+            }, 1000);
+        }
+
+        // Función para detener la alarma
+        function stopAlarm() {
+            container.classList.remove('alarm-active');
+            stopAlarmBtn.style.display = 'none';
+            clearInterval(alarmAudio);
+        }
+
+        // Función para actualizar el display
+        function updateDisplay() {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            display.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Función para iniciar el timer
+        function startTimer() {
+            if (timerInterval || isPaused) return;
+            
+            timerInterval = setInterval(() => {
+                if (totalSeconds > 0) {
+                    totalSeconds--;
+                    updateDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    triggerAlarm();
+                }
+            }, 1000);
+        }
+
+        // Función para pausar el timer
+        function pauseTimer() {
+            if (timerInterval && !isPaused) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isPaused = true;
+            }
+        }
+
+        // Función para reiniciar el timer
+        function resetTimer() {
+            stopAlarm();
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isPaused = false;
+            setTimeFromInputs();
+            updateDisplay();
+        }
+
+        // Función para establecer el tiempo desde los inputs
+        function setTimeFromInputs() {
+            const hours = parseInt(hoursInput.value) || 0;
+            const minutes = parseInt(minutesInput.value) || 0;
+            const seconds = parseInt(secondsInput.value) || 0;
+            
+            totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', () => {
+            if (isPaused) {
+                isPaused = false;
+                startTimer();
+            } else {
+                setTimeFromInputs();
+                startTimer();
+            }
+        });
+
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        stopAlarmBtn.addEventListener('click', stopAlarm);
+
+        // Inicializar
+        updateDisplay();
+    </script>
+</body>
+</html>
